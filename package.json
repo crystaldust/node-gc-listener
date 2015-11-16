@@ -23,5 +23,11 @@
   "homepage": "https://github.com/crystaldust/node-gc-listener",
   "dependencies": {
     "nan": "^2.1.0"
-  }
+  },
+  "files" : [
+    "index.js",
+    "binding.gyp",
+    "gc-listener.cc",
+    "README.md"
+  ]
 }
