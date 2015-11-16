@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/crystaldust/node-gc-listener/issues"
   },
-  "homepage": "https://github.com/crystaldust/node-gc-listener"
+  "homepage": "https://github.com/crystaldust/node-gc-listener",
+  "dependencies": {
+    "nan": "^2.1.0"
+  }
 }
