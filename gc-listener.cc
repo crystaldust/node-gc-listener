@@ -1,10 +1,6 @@
 #include <node.h>
 #include <uv.h>
-#include <iostream>
 #include <math.h>
-
-
-using namespace std;
 
 using v8::FunctionCallbackInfo;
 using v8::Value;
@@ -95,30 +91,12 @@ static void AsyncMemwatchAfter(uv_work_t* request) {
 
 void cbAfterGc( GCType type, GCCallbackFlags flags )
 {
-  cout<<"AddGCEpilogueCallback's cb is called" << endl;
-  //return ;
-
-  Isolate *isolate = Isolate::GetCurrent();
-
   Baton * baton = new Baton;             
-  v8::HeapStatistics hs;                 
-                                       
-  isolate->GetHeapStatistics(&hs);       
-
-  baton->heapUsage = hs.used_heap_size();
   baton->type = type;                    
   baton->flags = flags;                  
   baton->req.data = (void *) baton;      
 
   uv_queue_work(uv_default_loop(), &(baton->req), noop_work_func, (uv_after_work_cb)AsyncMemwatchAfter);
-
-  
-  /*
-  if( !g_cb.IsEmpty() ) {
-    Local<Function> cb = Local<Function>::New( isolate, g_cb );
-    cb->Call( Null(isolate), 0, {} );
-  }
-  */
 }
 
 
