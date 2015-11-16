@@ -1,6 +1,6 @@
 {
   "name": "gc-listener",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A tool for nodejs gc listening.",
   "main": "index.js",
   "scripts": {
@@ -24,7 +24,7 @@
   "dependencies": {
     "nan": "^2.1.0"
   },
-  "files" : [
+  "files": [
     "index.js",
     "binding.gyp",
     "gc-listener.cc",
