@@ -1,136 +1,54 @@
-#include <node.h>
-#include <uv.h>
-#include <math.h>
+#include "node_modules/nan/nan.h"
+#include <iostream>
 
-using v8::FunctionCallbackInfo;
+using Nan::FunctionCallbackInfo;
+using Nan::Persistent;
+
 using v8::Value;
-using v8::Function;
-using v8::Local;
-using v8::Handle;
-using v8::Persistent;
 using v8::Object;
-using v8::Isolate;
-using v8::Boolean;
-using v8::String;
-using v8::Context;
-using v8::Number;
-using v8::Integer;
-using v8::HandleScope;
+using v8::Function;
+using v8::FunctionTemplate;
+using v8::Local;
 
 using v8::GCType;
 using v8::GCCallbackFlags;
 using v8::V8;
-
 using v8::kGCTypeMarkSweepCompact;
 
-Persistent<Function> g_cb;
-Persistent<Object> g_context;
+Persistent<Function> gCB_BeforeGC;
+Persistent<Function> gCB_AfterGC;
 
-struct Baton {
-  uv_work_t req;
-  size_t heapUsage;
-  GCType type;
-  GCCallbackFlags flags;
-};
-
-static void noop_work_func(uv_work_t *) { }
-
-static void AsyncMemwatchAfter(uv_work_t* request) {
-    Isolate *isolate = Isolate::GetCurrent();
-    HandleScope scope(isolate);
-
-
-    Baton * b = (Baton *) request->data;
-
-    // do the math in C++, permanent
-    // record the type of GC event that occured
-
-
-    if (
-#if NODE_VERSION_AT_LEAST(0,8,0)
-        b->type == kGCTypeMarkSweepCompact
-#else
-        b->flags == kGCCallbackFlagCompacted
-#endif
-        ) {
-
-        // if there are any listeners, it's time to emit!
-        /*
-        if (!g_cb.IsEmpty()) {
-            Handle<Value> argv[3];
-
-            // magic argument to indicate to the callback all we want to know is whether there are
-            // listeners (here we don't)
-            argv[0] = Boolean::New(isolate, true);
-
-            Handle<Value> haveListeners = cb->Call( context, 1, argv);
-
-            if (haveListeners->BooleanValue()) {
-                double ut= 0.0;
-
-                // ok, there are listeners, we actually must serialize and emit this stats event
-                argv[0] = Boolean::New(isolate, false);
-                // the type of event to emit
-                argv[1] = String::NewFromUtf8(isolate,"stats");
-                argv[2] = stats;
-                cb->Call(context, 3, argv);
-            }
-        }
-        */
-
-        if( !g_cb.IsEmpty() ) {
-          Local<Object> context = Local<Object>::New( isolate, g_context );
-          Local<Function> cb = Local<Function>::New( isolate, g_cb );
-          cb->Call( context, 0, {} );
-        }
-    }
-
-    delete b;
+NAN_GC_CALLBACK(cbAfterGC) {
+  std::cout << "gctype: " << type << std::endl;
+  Nan::MakeCallback( Nan::GetCurrentContext()->Global(), Nan::New(gCB_AfterGC), 0, {} );
 }
 
-
-void cbAfterGc( GCType type, GCCallbackFlags flags )
-{
-  Baton * baton = new Baton;             
-  baton->type = type;                    
-  baton->flags = flags;                  
-  baton->req.data = (void *) baton;      
-
-  uv_queue_work(uv_default_loop(), &(baton->req), noop_work_func, (uv_after_work_cb)AsyncMemwatchAfter);
+NAN_GC_CALLBACK( cbBeforeGC ) {
+  std::cout << "gctype: " << type << std::endl;
+  Nan::MakeCallback( Nan::GetCurrentContext()->Global(), Nan::New(gCB_BeforeGC), 0, {} );
 }
 
-
-// Global handle to the after gc callback
-
-void SetPostCB( const FunctionCallbackInfo<Value>& args )
-{
-  Isolate *isolate = args.GetIsolate();
-  if( args.Length() == 1 && args[0]->IsFunction() ) {
-    g_cb.Reset( isolate, Handle<Function>::Cast(args[0]) );
-    g_context.Reset( isolate, isolate->GetCallingContext()->Global() );
+NAN_METHOD( SetCB_BeforeGC ) {
+  if( info.Length() == 1 && info[0]->IsFunction() ) {
+    gCB_BeforeGC.Reset( info[0].As<v8::Function>() );
+    Nan::AddGCPrologueCallback( cbBeforeGC, kGCTypeMarkSweepCompact );
   }
 }
 
-void InvokeCB( const FunctionCallbackInfo<Value>& args )
-{
-  Isolate *isolate = args.GetIsolate();
-  if( !g_cb.IsEmpty() ) {
-    Local<Function> cb = Local<Function>::New( isolate, g_cb );
-    cb->Call( Null(isolate), 0, {} );
+NAN_METHOD( SetCB_AfterGC ) {
+  if( info.Length() == 1 && info[0]->IsFunction() ) {
+    gCB_AfterGC.Reset( info[0].As<v8::Function>() );
+    Nan::AddGCEpilogueCallback( cbAfterGC, kGCTypeMarkSweepCompact );
   }
 }
 
+NAN_MODULE_INIT(Init) {
 
-void init( Local<Object> exports )
-{
-  //NODE_SET_METHOD( exports, "beforeGC", BeforeGC );
-  //NODE_SET_METHOD( exports, "afterGC",  SetPostCB );
-  NODE_SET_METHOD( exports, "setCB",  SetPostCB );
-  NODE_SET_METHOD( exports, "invokeCB", InvokeCB );
+  Local<Function> beforeGC = Nan::GetFunction( Nan::New<FunctionTemplate>(SetCB_BeforeGC) ).ToLocalChecked();
+  Nan::Set(target, Nan::New("before").ToLocalChecked(), beforeGC );
 
-  V8::AddGCEpilogueCallback( cbAfterGc );
+  Local<Function> afterGC  = Nan::GetFunction( Nan::New<FunctionTemplate>(SetCB_AfterGC) ).ToLocalChecked();
+  Nan::Set(target, Nan::New("after").ToLocalChecked(), afterGC );
 }
 
-
-
-NODE_MODULE( whatever, init );
+NODE_MODULE(nangclistener, Init);
