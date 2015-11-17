@@ -1,7 +1,7 @@
 {
   "targets" : [
     {
-      "target_name" : "gc-listener",
+      "target_name" : "gclistener",
       "sources" : [ "gc-listener.cc" ]
     }
   ],

@@ -51,4 +51,4 @@ NAN_MODULE_INIT(Init) {
   Nan::Set(target, Nan::New("after").ToLocalChecked(), afterGC );
 }
 
-NODE_MODULE(nangclistener, Init);
+NODE_MODULE(gclistener, Init);
