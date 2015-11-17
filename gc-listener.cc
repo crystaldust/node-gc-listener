@@ -1,5 +1,4 @@
 #include "node_modules/nan/nan.h"
-#include <iostream>
 
 using Nan::FunctionCallbackInfo;
 using Nan::Persistent;
@@ -19,12 +18,10 @@ Persistent<Function> gCB_BeforeGC;
 Persistent<Function> gCB_AfterGC;
 
 NAN_GC_CALLBACK(cbAfterGC) {
-  std::cout << "gctype: " << type << std::endl;
   Nan::MakeCallback( Nan::GetCurrentContext()->Global(), Nan::New(gCB_AfterGC), 0, {} );
 }
 
 NAN_GC_CALLBACK( cbBeforeGC ) {
-  std::cout << "gctype: " << type << std::endl;
   Nan::MakeCallback( Nan::GetCurrentContext()->Global(), Nan::New(gCB_BeforeGC), 0, {} );
 }
 
