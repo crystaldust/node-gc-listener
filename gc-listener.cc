@@ -44,8 +44,10 @@ NAN_METHOD( SetCB_AfterGC ) {
 
 NAN_MODULE_INIT(Init) {
 
+  /*
   Local<Function> beforeGC = Nan::GetFunction( Nan::New<FunctionTemplate>(SetCB_BeforeGC) ).ToLocalChecked();
   Nan::Set(target, Nan::New("before").ToLocalChecked(), beforeGC );
+  */
 
   Local<Function> afterGC  = Nan::GetFunction( Nan::New<FunctionTemplate>(SetCB_AfterGC) ).ToLocalChecked();
   Nan::Set(target, Nan::New("after").ToLocalChecked(), afterGC );
