@@ -1,1 +1,1 @@
-module.exports = require( './build/Release/gc-listener' );
+module.exports = require( './build/Release/gclistener' );
