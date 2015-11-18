@@ -27,6 +27,7 @@ NAN_GC_CALLBACK(cbAfterGC) {
 }
 
 void CallBeforeGC(uv_work_t* request) {
+  Nan::HandleScope scope;
   Nan::MakeCallback( Nan::GetCurrentContext()->Global(), Nan::New(gCB_BeforeGC), 0, {} );
 }
 
