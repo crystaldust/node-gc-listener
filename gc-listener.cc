@@ -1,4 +1,5 @@
 #include "nan.h"
+#include <uv.h>
 
 using Nan::FunctionCallbackInfo;
 using Nan::Persistent;
@@ -17,12 +18,20 @@ using v8::kGCTypeMarkSweepCompact;
 Persistent<Function> gCB_BeforeGC;
 Persistent<Function> gCB_AfterGC;
 
+
+
+void doNothing(uv_work_t *) {}
+
 NAN_GC_CALLBACK(cbAfterGC) {
   Nan::MakeCallback( Nan::GetCurrentContext()->Global(), Nan::New(gCB_AfterGC), 0, {} );
 }
 
-NAN_GC_CALLBACK( cbBeforeGC ) {
+void CallBeforeGC(uv_work_t* request) {
   Nan::MakeCallback( Nan::GetCurrentContext()->Global(), Nan::New(gCB_BeforeGC), 0, {} );
+}
+
+NAN_GC_CALLBACK( cbBeforeGC ) {
+  uv_queue_work( uv_default_loop(), new uv_work_t(), doNothing, uv_after_work_cb(CallBeforeGC) );
 }
 
 NAN_METHOD( SetCB_BeforeGC ) {
@@ -41,10 +50,8 @@ NAN_METHOD( SetCB_AfterGC ) {
 
 NAN_MODULE_INIT(Init) {
 
-  /*
   Local<Function> beforeGC = Nan::GetFunction( Nan::New<FunctionTemplate>(SetCB_BeforeGC) ).ToLocalChecked();
   Nan::Set(target, Nan::New("before").ToLocalChecked(), beforeGC );
-  */
 
   Local<Function> afterGC  = Nan::GetFunction( Nan::New<FunctionTemplate>(SetCB_AfterGC) ).ToLocalChecked();
   Nan::Set(target, Nan::New("after").ToLocalChecked(), afterGC );
