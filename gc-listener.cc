@@ -1,4 +1,4 @@
-#include "node_modules/nan/nan.h"
+#include "nan.h"
 
 using Nan::FunctionCallbackInfo;
 using Nan::Persistent;
